@@ -51,15 +51,15 @@ text_stim = visual.TextStim(
 
 dots = visual.DotStim(
     win,
-    nDots=300,
+    nDots=250,
     fieldShape="circle",
     dotSize=10,
-    dotLife=5,
+    dotLife=3,
     signalDots="different",
     noiseDots="position",
     fieldSize=(25,25),
     coherence=0.25,
-    speed=0.25
+    speed=0.075
 )
 
 
