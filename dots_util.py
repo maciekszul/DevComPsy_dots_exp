@@ -137,3 +137,13 @@ def generate_trial(n_points, radius, dot_life, n_frames, settings, dot_lifes=Non
         copy_points[dot_life_map] = generate_points(np.sum(dot_life_map), radius)
         positions.append(copy_points)
     return np.array(positions)
+
+
+def consecutive(data, stepsize=1):
+    return np.split(data, np.where(np.diff(data) != stepsize)[0]+1)
+
+
+def shuffle_array(array, n_row=3):
+    while True:
+        np.random.shuffle(array)
+
