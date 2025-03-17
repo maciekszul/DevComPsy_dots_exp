@@ -139,6 +139,27 @@ def generate_trial(n_points, radius, dot_life, n_frames, settings, dot_lifes=Non
     return np.array(positions)
 
 
+def generate_trial_for_viz(n_points, radius, dot_life, n_frames, settings, dot_lifes=None):
+    points = generate_points(n_points, radius)
+    if not isinstance(dot_lifes, np.ndarray):
+        dot_lifes = np.random.randint(dot_life, size=n_points)
+    dots_per_cond = [int(n_points * settings[k][0]) for k in settings.keys()]
+    dots_per_cond[-1] = n_points - sum(dots_per_cond[:-1])
+    dots_per_cond = {k: dots_per_cond[i] for i, k in enumerate(settings.keys())}
+    angles = np.hstack([fill_stuff(k, settings[k][1], dots_per_cond[k]) for k in settings.keys()])
+    distances = np.hstack([fill_stuff("", settings[k][2], dots_per_cond[k]) for k in settings.keys()])
+    copy_points = copy(points)
+    positions = []
+    for i in range(n_frames):
+        dot_lifes += 1
+        dot_life_map = dot_lifes >= dot_life
+        dot_lifes[dot_life_map] = 0
+        copy_points = move_points(radius, copy_points, angles, distances)
+        copy_points[dot_life_map] = generate_points(np.sum(dot_life_map), radius)
+        positions.append(copy_points)
+    return np.array(positions), dots_per_cond
+
+
 def consecutive(data, stepsize=1):
     return np.split(data, np.where(np.diff(data) != stepsize)[0]+1)
 

@@ -1,4 +1,5 @@
 import numpy as np
+import json
 
 
 def check_equal(a):
@@ -41,3 +42,32 @@ def randomisation(c, n):
     while search_n(c, 4):
         np.random.shuffle(c)
     return c
+
+
+def load_json(json_path):
+    with open(json_path) as json_file:
+        data = json.load(json_file)
+    return data
+
+
+def save_dict_as_json(file_path, dictionary):
+    """Saves a dictionary as a JSON file."""
+    try:
+        with open(file_path, 'w', encoding='utf-8') as json_file:
+            json.dump(dictionary, json_file, indent=4, ensure_ascii=False)
+    except Exception as e:
+        print(f"Error saving dictionary: {e}")
+
+
+def update_json_file(file_path, update_dict):
+    """Updates an existing JSON file with a dictionary. Replaces values of existing keys."""
+    try:
+        with open(file_path, 'r', encoding='utf-8') as json_file:
+            data = json.load(json_file)
+        
+        data.update(update_dict)
+        
+        with open(file_path, 'w', encoding='utf-8') as json_file:
+            json.dump(data, json_file, indent=4, ensure_ascii=False)
+    except Exception as e:
+        print(f"Error updating dictionary: {e}")
