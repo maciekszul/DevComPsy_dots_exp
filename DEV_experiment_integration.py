@@ -69,6 +69,10 @@ print(framerate)
 
 n_frames = int(framerate * 0.35)
 
+# output paths
+Path("data").mkdir(parents=True, exist_ok=True)
+Path("img").mkdir(parents=True, exist_ok=True)
+
 # scales positioning
 offset = 3
 width = 2
@@ -92,7 +96,6 @@ label_stim = stim.labels(
     win, label_str, label_pos
 )
 
-# scale_objs = list(scale) + list(arrows_stim) + list(label_stim)
 
 # fixation point
 fix_size = 0.3
@@ -164,11 +167,25 @@ tr_type_step_value = {
     i: np.where(signal_props[i] >= 0.6 + opposite_strengths[i])[0][-1] for i in opposite_strengths.keys()
 }
 
+exp_data = {
+    "block" : [],
+    "trial_number": [],
+    "dots_direction": [],
+    "response_key": [],
+    "response_correct": [],
+    "opposite_strenght": [],
+    "opposite_label": [],
+    "step": [],
+    "signal_prop": []
+}
 
-
+continuous_output = {}
 
 for trial in range(n_trials):
+
     stim.draw(fix_parts)
+    win.flip()
+
     pre_trial_wait = core.StaticPeriod()
     pre_trial_wait.start(0.25)
 
@@ -208,14 +225,22 @@ for trial in range(n_trials):
 
     binary_mouse = []
     rt_list = []
-    cursor_pos = []
+
+    trial_output = {
+        "scale_position": [],
+        "mouse_position": [],
+        "time": []
+    }
+
     scale_direction = scale_directions[trial]
     if scale_direction == 1:
         label_pos_tr = label_pos[::-1]
         subtr = -(height/2)
+        scale[3].ori = 180.0
     else:
         label_pos_tr = label_pos
         subtr = (height/2)
+        scale[3].ori = 0.0
     
     rt = None
 
@@ -231,38 +256,65 @@ for trial in range(n_trials):
         if buttons[0]:
             q = -3
             scale[2].setOpacity(1.0)
+            scale[3].setOpacity(1.0)
             rt_list.append(times[0])
+            if scale_direction == 1:
+                scale[3].pos = [q, height/2]
+            else:
+                scale[3].pos = [q, 0 - height/2]
         elif buttons[2]:
             q = 3
             scale[2].setOpacity(1.0)
+            scale[3].setOpacity(1.0)
             rt_list.append(times[2])
+            if scale_direction == 1:
+                scale[3].pos = [q, height/2]
+            else:
+                scale[3].pos = [q, 0 - height/2]
         else:
             q = 0
             scale[2].setOpacity(0.0)
-            mouse.setPos((0, -(height/2)))
+            scale[3].setOpacity(0.0)
+            # mouse.setPos((0, -(height/2))) # start point of the scale
+            mouse.setPos((0, 0))
+            if scale_direction == 1:
+                scale[3].pos = [0, height/2]
+            else:
+                scale[3].pos = [0, 0 - height/2]
         
         [p.setPos(label_pos_tr[ix]) for ix, p in enumerate(label_stim)]
         
         if m_pos[1] < -(height/2):
             scale[2].pos = [q, -(height/2)]
+            b_h = np.abs(((scale[2].pos[1] + subtr)/ height)) * height
+            scale[3].size = [2.0, b_h]
         elif m_pos[1] > (height/2):
             scale[2].pos = [q, (height/2)]
+            b_h = np.abs(((scale[2].pos[1] + subtr)/ height)) * height
+            scale[3].size = [2.0, b_h]
         else:
             scale[2].pos = [q, m_pos[1]]
-        
-        cursor_pos.append(scale[2].pos)
+            b_h = np.abs(((scale[2].pos[1] + subtr)/ height)) * height
+            scale[3].size = [2.0, b_h]
         
         stim.draw(label_stim)
         stim.draw(arrows_stim)
         stim.draw(scale)
 
-        win.flip()
+        frame_time = win.flip()
+        trial_output["time"].append(frame_time)
+        trial_output["scale_position"].append(
+            np.round(np.abs(((scale[2].pos[1] + subtr)/ height) *100), 2)
+        )
+        trial_output["mouse_position"].append(
+            m_pos[1]
+        )
 
         if any(buttons):
             binary_mouse.append(any(buttons))
             press_resp = buttons
         
-        elif (len(binary_mouse) > 5) and (any(buttons) == False):
+        elif (len(binary_mouse) > 10) and (any(buttons) == False):
             try:
                 rt = np.unique(rt_list).min()
             except:
@@ -280,6 +332,8 @@ for trial in range(n_trials):
         correct = None
     scale_resp = np.round(np.abs(((scale[2].pos[1] + subtr)/ height) *100), 2)
     print(rt, response, correct, scale_resp)
-
+    print(trial_output["time"])
+    print(trial_output["scale_position"])
+    print(trial_output["mouse_position"])
 
 abort()

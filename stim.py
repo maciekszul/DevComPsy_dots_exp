@@ -19,8 +19,14 @@ def scales_LR(win, width, height, offset):
         win, start=[0 - width/2, 0], end=[0 + width/2, 0],
         lineColor="red", lineWidth=15
         )
+    
+    box = visual.Rect(
+        win, width=width, height=height,
+        color="red", units="deg", anchor="bottom",
+        pos=[0,0]
+    )
 
-    return L_scale, R_scale, marker
+    return L_scale, R_scale, marker, box
 
 
 arrows_img = "img/arrow_white.png"
