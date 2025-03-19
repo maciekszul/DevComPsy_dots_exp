@@ -9,7 +9,7 @@ from psychopy import event
 from psychopy import visual
 from psychopy import monitors
 from datetime import datetime
-from exp_util import randomisation
+from exp_util import randomisation, save_dict_as_json, update_json_file
 
 
 timestamp = str(datetime.timestamp(datetime.now()))
@@ -26,15 +26,22 @@ n_points = 250
 radius = 12.5
 dot_life = 7
 trial_duration = 0.35
+corr_n_stair = 2
 
-
+exp_settings = {
+    "subject": "test",
+    "gender (m/f/o)": "o",
+    "age": 69,
+    "block": 0,
+    "monitor": "office"
+}
 
 monitors_ = {
     "office": [2560, 1440, 59.67, 33.56, 56],
     "meg": [1920, 1080, 52.70, 29.64, 56]
 }
 
-mon_choice = "office"
+mon_choice = exp_settings["monitor"]
 
 mon = monitors.Monitor(mon_choice)
 w_px, h_px, w_cm, h_cm, d_cm = monitors_[mon_choice]
@@ -163,11 +170,15 @@ tr_type_correct_list = {
     i: [] for i in opposite_strengths.keys()
 }
 
+# where the staircase starts
 tr_type_step_value = {
-    i: np.where(signal_props[i] >= 0.6 + opposite_strengths[i])[0][-1] for i in opposite_strengths.keys()
+    i: np.where(signal_props[i] >= 0.5 + opposite_strengths[i])[0][-1] for i in opposite_strengths.keys()
 }
 
 exp_data = {
+    "subject": [],
+    "gender (m/f/o)": [],
+    "age": [],
     "block" : [],
     "trial_number": [],
     "dots_direction": [],
@@ -176,10 +187,19 @@ exp_data = {
     "opposite_strenght": [],
     "opposite_label": [],
     "step": [],
-    "signal_prop": []
+    "signal_prop": [],
+    "scale_response": [],
+    "rt" : []
 }
 
 continuous_output = {}
+
+corr_stair = 0
+
+jsonpath = Path("data", f"interleaved_staircase_output_{timestamp}.json")
+
+save_dict_as_json(jsonpath, continuous_output)
+
 
 for trial in range(n_trials):
 
@@ -330,10 +350,76 @@ for trial in range(n_trials):
     except:
         response = None
         correct = None
+    
+    post_trial_wait = core.StaticPeriod()
+    post_trial_wait.start(0.25)
+    
     scale_resp = np.round(np.abs(((scale[2].pos[1] + subtr)/ height) *100), 2)
-    print(rt, response, correct, scale_resp)
-    print(trial_output["time"])
-    print(trial_output["scale_position"])
-    print(trial_output["mouse_position"])
+    
+    exp_data["subject"].append(exp_settings["subject"])
+    exp_data["age"].append(exp_settings["age"])
+    exp_data["gender (m/f/o)"].append(exp_settings["gender (m/f/o)"])
+    exp_data["block"].append(exp_settings["block"])
+    exp_data["trial_number"].append(trial)
+    exp_data["dots_direction"].append(direction)
+    exp_data["response_key"].append(response)
+    exp_data["response_correct"].append(correct)
+    exp_data["step"].append(step)
+    exp_data["signal_prop"].append(signal_prop)
+    exp_data["opposite_strenght"].append(opposite_strengths[trial_type])
+    exp_data["opposite_label"].append(trial_type)
+    exp_data["scale_response"].append(scale_resp)
+    exp_data["rt"].append(rt)
+    
+    # staircase settings 2 in a row independently
+    if correct:
+        corr_stair += 1
+
+    elif not correct:
+        corr_stair = 0
+
+        if tr_type_step_value[trial_type] < 0:
+            tr_type_step_value[trial_type] = 0
+        else:
+            tr_type_step_value[trial_type] -= 1
+    
+    if corr_stair == corr_n_stair:
+        
+        corr_stair = 0
+
+        tr_type_step_value[trial_type] += 1
+
+        if signal_prop > 0.3:
+            tr_type_step_value[trial_type] += 2
+            
+
+    # staircase settings last 2
+    # tr_type_correct_list[trial_type].append(correct)
+
+    # if sum(tr_type_correct_list[trial_type][-2:]) == corr_n_stair:
+    #     if signal_prop > 0.3:
+    #         tr_type_step_value[trial_type] += 2
+    #     else:
+    #         tr_type_step_value[trial_type] += 1
+
+    #     if tr_type_step_value[trial_type] >= len(signal_props[trial_type]):
+    #         tr_type_step_value[trial_type] = len(signal_props[trial_type]) - 1
+
+    
+    # if tr_type_correct_list[trial_type][-1] == False:
+    #     tr_type_step_value[trial_type] -= 1
+    #     if tr_type_step_value[trial_type] < 0:
+    #         tr_type_step_value[trial_type] = 0
+
+    print(step, signal_prop, trial_type, correct)
+    # file saving
+    filepath = Path("data", f"interleaved_staircase_output_{timestamp}.csv")
+    output_df = pd.DataFrame.from_dict(exp_data)
+    output_df.to_csv(filepath, index=False)
+    
+    update_dict_with = {trial: trial_output}
+    update_json_file(jsonpath, update_dict_with)
+
+    post_trial_wait.complete()
 
 abort()
