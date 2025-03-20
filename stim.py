@@ -130,3 +130,10 @@ def text(win, text):
         anchorVert="center"
     )
     return text_stim
+
+
+def plot_image(win, image_path):
+    img = visual.ImageStim(
+        win, image=image_path
+    )
+    return img

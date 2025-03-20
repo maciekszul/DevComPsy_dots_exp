@@ -9,12 +9,20 @@ from psychopy import event
 from psychopy import visual
 from psychopy import monitors
 from datetime import datetime
-from exp_util import randomisation, save_dict_as_json, update_json_file
+from exp_util import randomisation, save_dict_as_json, update_json_file, plot_staircase_results
 
 
 timestamp = str(datetime.timestamp(datetime.now()))
 
-def abort():
+def abort(filename, plot=False, show=False):
+    if plot:
+        plot_staircase_results(output_df, filename)
+    if show:
+        img = stim.plot_image(win, filename)
+        img.draw()
+        win.flip()
+        event.waitKeys(keyList=["escape"])
+
     win.close()
     core.quit()
 
@@ -27,14 +35,20 @@ radius = 12.5
 dot_life = 7
 trial_duration = 0.35
 corr_n_stair = 2
+small_steps = 50
 
 exp_settings = {
+    "exp_name": "counterfactual_staircase",
     "subject": "test",
     "gender (m/f/o)": "o",
     "age": 69,
     "block": 0,
-    "monitor": "office"
+    "monitor": "office",
+    "show_stair": True
 }
+
+exp_name = exp_settings["exp_name"]
+subject = exp_settings["subject"]
 
 monitors_ = {
     "office": [2560, 1440, 59.67, 33.56, 56],
@@ -171,8 +185,9 @@ tr_type_correct_list = {
 }
 
 # where the staircase starts
+
 tr_type_step_value = {
-    i: np.where(signal_props[i] >= 0.5 + opposite_strengths[i])[0][-1] for i in opposite_strengths.keys()
+    i: int(np.min(np.where(signal_props[i] < 0.5 + opposite_strengths[i])[0])) for i in opposite_strengths.keys()
 }
 
 exp_data = {
@@ -195,8 +210,10 @@ exp_data = {
 continuous_output = {}
 
 corr_stair = 0
+mod = 2
 
-jsonpath = Path("data", f"interleaved_staircase_output_{timestamp}.json")
+jsonpath = Path("data", f"{exp_name}_{subject}_{timestamp}.json")
+plotpath = Path("data", f"{exp_name}_{subject}_{timestamp}.png")
 
 save_dict_as_json(jsonpath, continuous_output)
 
@@ -208,6 +225,9 @@ for trial in range(n_trials):
 
     pre_trial_wait = core.StaticPeriod()
     pre_trial_wait.start(0.25)
+
+    if trial > small_steps:
+        mod = 1
 
     trial_type = list(opposite_strengths.keys())[trial_types[trial]]
 
@@ -235,7 +255,7 @@ for trial in range(n_trials):
         stim.draw(fix_parts)
         win.flip()
         if event.getKeys(["escape"]):
-            abort()
+            abort(plotpath, show=exp_settings["show_stair"])
     stim.draw(fix_parts)
     win.flip()
 
@@ -343,7 +363,7 @@ for trial in range(n_trials):
             break
         
         if event.getKeys(keyList=["escape"], timeStamped=False):
-            abort()
+            abort(plotpath, show=exp_settings["show_stair"])
     try:
         response = mouse_map[press_resp.index(1)]
         correct = direction == response_mapping[response]
@@ -371,49 +391,31 @@ for trial in range(n_trials):
     exp_data["scale_response"].append(scale_resp)
     exp_data["rt"].append(rt)
     
+
     # staircase settings 2 in a row independently
-    if correct:
+    if correct == True:
         corr_stair += 1
 
-    elif not correct:
-        corr_stair = 0
+        if corr_stair > corr_n_stair:
+            corr_stair = 0
+            if signal_prop > 0.3:
+                tr_type_step_value[trial_type] += 2 * mod
+            else:
+                tr_type_step_value[trial_type] += 1 * mod
 
+            if tr_type_step_value[trial_type] >= len(signal_props[trial_type]):
+                tr_type_step_value[trial_type] = len(signal_props[trial_type]) - 1
+    
+    elif correct == False:
+        corr_stair = 0
+        tr_type_step_value[trial_type] -= 1 * mod
         if tr_type_step_value[trial_type] < 0:
             tr_type_step_value[trial_type] = 0
-        else:
-            tr_type_step_value[trial_type] -= 1
-    
-    if corr_stair == corr_n_stair:
-        
-        corr_stair = 0
 
-        tr_type_step_value[trial_type] += 1
 
-        if signal_prop > 0.3:
-            tr_type_step_value[trial_type] += 2
-            
-
-    # staircase settings last 2
-    # tr_type_correct_list[trial_type].append(correct)
-
-    # if sum(tr_type_correct_list[trial_type][-2:]) == corr_n_stair:
-    #     if signal_prop > 0.3:
-    #         tr_type_step_value[trial_type] += 2
-    #     else:
-    #         tr_type_step_value[trial_type] += 1
-
-    #     if tr_type_step_value[trial_type] >= len(signal_props[trial_type]):
-    #         tr_type_step_value[trial_type] = len(signal_props[trial_type]) - 1
-
-    
-    # if tr_type_correct_list[trial_type][-1] == False:
-    #     tr_type_step_value[trial_type] -= 1
-    #     if tr_type_step_value[trial_type] < 0:
-    #         tr_type_step_value[trial_type] = 0
-
-    print(step, signal_prop, trial_type, correct)
+    print(step, signal_prop, trial_type, correct, corr_stair)
     # file saving
-    filepath = Path("data", f"interleaved_staircase_output_{timestamp}.csv")
+    filepath = Path("data", f"{exp_name}_{subject}_{timestamp}.csv")
     output_df = pd.DataFrame.from_dict(exp_data)
     output_df.to_csv(filepath, index=False)
     
@@ -422,4 +424,6 @@ for trial in range(n_trials):
 
     post_trial_wait.complete()
 
-abort()
+
+
+abort(plotpath, show=exp_settings["show_stair"])

@@ -1,5 +1,7 @@
-import numpy as np
 import json
+import numpy as np
+import pandas as pd
+import matplotlib.pylab as plt
 
 
 def check_equal(a):
@@ -71,3 +73,38 @@ def update_json_file(file_path, update_dict):
             json.dump(data, json_file, indent=4, ensure_ascii=False)
     except Exception as e:
         print(f"Error updating dictionary: {e}")
+
+
+def plot_staircase_results(output_df, file_path):
+    plt.ioff()
+    f, ax = plt.subplots(2, 1, figsize=[12, 9])
+    for ix, trial_type in enumerate(output_df.opposite_label.unique()):
+        data_ = output_df.loc[output_df.opposite_label == trial_type].reset_index(drop=True)
+        cf_value = np.min(data_.opposite_strenght.unique())
+        ax[ix].set_title(f"Counterfactual evidence: {trial_type}")
+        ax[ix].plot([0, data_.index.max()], [cf_value, cf_value], lw=1, c="#55505C")
+        ax[ix].scatter(data_.index, np.repeat(cf_value, data_.index.shape[0]), c="#55505C", label="Counterfactual Evidence", s=3)
+        ax[ix].fill_between(data_.index, cf_value, 0, color="#55505C", alpha=0.1, lw=0)
+
+        ax[ix].plot(data_.index, data_.signal_prop + cf_value, c="#7FC6A4")
+        ax[ix].scatter(data_.index, data_.signal_prop + cf_value, c="#7FC6A4", label="Evidence")
+        error_bool = ~data_.response_correct.to_numpy()
+        ax[ix].scatter(data_.index.to_numpy()[error_bool], data_.signal_prop[error_bool] + cf_value, c="red", label="Errors", zorder=999)
+
+        ax[ix].fill_between(data_.index, data_.signal_prop + cf_value, 1, color="#FAF33E", alpha=0.1, lw=0, label="Noise")
+        ax[ix].fill_between(data_.index, data_.signal_prop + cf_value, cf_value, color="#7FC6A4", alpha=0.2, lw=0)
+        ax[ix].set_xlabel("trial")
+        ax[ix].set_ylabel("signal dot proportion")
+        ax[ix].set_ylim(0.0, 1.0)
+
+        ax2 = ax[ix].twinx()
+        ax2.plot(data_.index, data_.scale_response, c="dodgerblue")
+        ax2.scatter(data_.index, data_.scale_response, c="dodgerblue")
+        ax2.set_ylim(-5, 105)
+        ax2.set_ylabel("Confidence rating")
+
+    ax[0].legend(fontsize="x-small", loc=3)
+    plt.savefig(file_path, transparent=False)
+    plt.close("all")
+
+    return file_path
