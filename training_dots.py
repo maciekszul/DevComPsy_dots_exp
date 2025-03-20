@@ -1,11 +1,13 @@
 import stim
 import dots_util
 import numpy as np
+from pathlib import Path
 from itertools import cycle
 from psychopy import core
 from psychopy import event
 from psychopy import visual
 from psychopy import monitors
+from exp_util import load_json
 
 
 def abort():
@@ -53,8 +55,17 @@ mapping = {
     "right": 0.0
 }
 
-n_points = 250
-radius = 12.5
+current_path = Path.cwd()
+
+trial_settings = load_json(
+    Path(current_path, "main_exp_settings.json")
+)
+randomisation_bool = trial_settings["randomisation_bool"]
+n_trials = trial_settings["n_trials"]
+n_points = trial_settings["n_points"]
+radius = trial_settings["radius"]
+dot_life_s = trial_settings["dot_life_s"]
+
 dot_life = int(0.1 * framerate)
 trial_duration = 2
 n_frames = int(framerate * trial_duration)

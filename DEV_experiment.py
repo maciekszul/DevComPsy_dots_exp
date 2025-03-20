@@ -28,15 +28,8 @@ def abort(filename, plot=True, show=False):
     core.quit()
 
 
-# for future JSON settings
-randomisation_bool = False
-n_trials = 180
-n_points = 250
-radius = 12.5
-dot_life_s = 0.1
-trial_duration = 0.35
-corr_n_stair = 2
-small_steps = 50
+
+current_path = Path.cwd()
 
 exp_settings = {
     "exp_name": "counterfactual_staircase",
@@ -55,7 +48,7 @@ prompt = gui.DlgFromDict(
 )
 
 trial_settings = load_json(
-    exp_settings["settings"]
+    Path(current_path, exp_settings["settings"])
 )
 randomisation_bool = trial_settings["randomisation_bool"]
 n_trials = trial_settings["n_trials"]
@@ -123,7 +116,7 @@ height = 13
 scale = stim.scales_LR(win, width, height, offset)
 
 # arrows
-arrows_img = "img/arrow_white.png"
+arrows_img = Path(current_path, "img", "arrow_white.png")
 arrows_pos = [(-3, 8), (3, 8)]
 arrows_ori = [180.0, 0.0]
 
@@ -236,8 +229,8 @@ continuous_output = {}
 
 mod = 2
 
-jsonpath = Path("data", f"{exp_name}_{subject}_{timestamp}.json")
-plotpath = Path("data", f"{exp_name}_{subject}_{timestamp}.png")
+jsonpath = Path(current_path, "data", f"{exp_name}_{subject}_{timestamp}.json")
+plotpath = Path(current_path, "data", f"{exp_name}_{subject}_{timestamp}.png")
 
 save_dict_as_json(jsonpath, continuous_output)
 
@@ -420,7 +413,7 @@ for trial in range(n_trials):
     if correct == True:
         tr_type_corr_stair[trial_type] += 1
 
-        if tr_type_corr_stair[trial_type] > corr_n_stair:
+        if tr_type_corr_stair[trial_type] > corr_n_stair - 1:
             tr_type_corr_stair[trial_type] = 0
             if signal_prop > 0.3:
                 tr_type_step_value[trial_type] += 2 * mod
@@ -439,7 +432,7 @@ for trial in range(n_trials):
 
     print(step, signal_prop, trial_type, correct, tr_type_corr_stair[trial_type])
     # file saving
-    filepath = Path("data", f"{exp_name}_{subject}_{timestamp}.csv")
+    filepath = Path(current_path, "data", f"{exp_name}_{subject}_{timestamp}.csv")
     output_df = pd.DataFrame.from_dict(exp_data)
     output_df.to_csv(filepath, index=False)
     
