@@ -1,0 +1,10 @@
+{
+    "randomisation_bool": false,
+    "n_trials": 180,
+    "n_points": 250,
+    "radius": 12.5,
+    "dot_life_s": 0.1,
+    "trial_duration": 0.35,
+    "corr_n_stair": 2,
+    "small_steps": 50
+}

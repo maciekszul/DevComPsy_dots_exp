@@ -5,24 +5,24 @@ def scales_LR(win, width, height, offset):
 
     L_scale = visual.Rect(
         win, width=width, height=height,
-        color="#FFFFFF", units="deg",
+        color="#453b3b", units="deg",
         pos=[-offset, 0]
     )
 
     R_scale = visual.Rect(
         win, width=width, height=height,
-        color="#FFFFFF", units="deg",
+        color="#453b3b", units="deg",
         pos=[offset, 0]
     )
 
     marker = visual.Line(
         win, start=[0 - width/2, 0], end=[0 + width/2, 0],
-        lineColor="red", lineWidth=15
+        lineColor="#800000", lineWidth=15
         )
     
     box = visual.Rect(
         win, width=width, height=height,
-        color="red", units="deg", anchor="bottom",
+        color="#800000", units="deg", anchor="bottom",
         pos=[0,0]
     )
 

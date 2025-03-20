@@ -4,17 +4,18 @@ import numpy as np
 import pandas as pd
 import matplotlib.pylab as plt
 from pathlib import Path
+from psychopy import gui
 from psychopy import core
 from psychopy import event
 from psychopy import visual
 from psychopy import monitors
 from datetime import datetime
-from exp_util import randomisation, save_dict_as_json, update_json_file, plot_staircase_results
+from exp_util import randomisation, save_dict_as_json, update_json_file, plot_staircase_results, load_json
 
 
 timestamp = str(datetime.timestamp(datetime.now()))
 
-def abort(filename, plot=False, show=False):
+def abort(filename, plot=True, show=False):
     if plot:
         plot_staircase_results(output_df, filename)
     if show:
@@ -32,7 +33,7 @@ randomisation_bool = False
 n_trials = 180
 n_points = 250
 radius = 12.5
-dot_life = 7
+dot_life_s = 0.1
 trial_duration = 0.35
 corr_n_stair = 2
 small_steps = 50
@@ -44,8 +45,26 @@ exp_settings = {
     "age": 69,
     "block": 0,
     "monitor": "office",
-    "show_stair": True
+    "show_stair": True,
+    "settings": "main_exp_settings.json"
 }
+
+prompt = gui.DlgFromDict(
+    dictionary=exp_settings, 
+    title="SUBJECT"
+)
+
+trial_settings = load_json(
+    exp_settings["settings"]
+)
+randomisation_bool = trial_settings["randomisation_bool"]
+n_trials = trial_settings["n_trials"]
+n_points = trial_settings["n_points"]
+radius = trial_settings["radius"]
+dot_life_s = trial_settings["dot_life_s"]
+trial_duration = trial_settings["trial_duration"]
+corr_n_stair = trial_settings["corr_n_stair"]
+small_steps = trial_settings["small_steps"]
 
 exp_name = exp_settings["exp_name"]
 subject = exp_settings["subject"]
@@ -54,6 +73,7 @@ monitors_ = {
     "office": [2560, 1440, 59.67, 33.56, 56],
     "meg": [1920, 1080, 52.70, 29.64, 56]
 }
+
 
 mon_choice = exp_settings["monitor"]
 
@@ -88,7 +108,8 @@ framerate = win.getActualFrameRate(
 )
 print(framerate)
 
-n_frames = int(framerate * 0.35)
+n_frames = int(framerate * trial_duration)
+dot_life = int(dot_life_s * framerate)
 
 # output paths
 Path("data").mkdir(parents=True, exist_ok=True)
@@ -184,6 +205,10 @@ tr_type_correct_list = {
     i: [] for i in opposite_strengths.keys()
 }
 
+tr_type_corr_stair = {
+    i: 0 for i in opposite_strengths.keys()
+}
+
 # where the staircase starts
 
 tr_type_step_value = {
@@ -209,7 +234,6 @@ exp_data = {
 
 continuous_output = {}
 
-corr_stair = 0
 mod = 2
 
 jsonpath = Path("data", f"{exp_name}_{subject}_{timestamp}.json")
@@ -394,10 +418,10 @@ for trial in range(n_trials):
 
     # staircase settings 2 in a row independently
     if correct == True:
-        corr_stair += 1
+        tr_type_corr_stair[trial_type] += 1
 
-        if corr_stair > corr_n_stair:
-            corr_stair = 0
+        if tr_type_corr_stair[trial_type] > corr_n_stair:
+            tr_type_corr_stair[trial_type] = 0
             if signal_prop > 0.3:
                 tr_type_step_value[trial_type] += 2 * mod
             else:
@@ -407,13 +431,13 @@ for trial in range(n_trials):
                 tr_type_step_value[trial_type] = len(signal_props[trial_type]) - 1
     
     elif correct == False:
-        corr_stair = 0
+        tr_type_corr_stair[trial_type] = 0
         tr_type_step_value[trial_type] -= 1 * mod
         if tr_type_step_value[trial_type] < 0:
             tr_type_step_value[trial_type] = 0
 
 
-    print(step, signal_prop, trial_type, correct, corr_stair)
+    print(step, signal_prop, trial_type, correct, tr_type_corr_stair[trial_type])
     # file saving
     filepath = Path("data", f"{exp_name}_{subject}_{timestamp}.csv")
     output_df = pd.DataFrame.from_dict(exp_data)
@@ -427,3 +451,4 @@ for trial in range(n_trials):
 
 
 abort(plotpath, show=exp_settings["show_stair"])
+

@@ -101,7 +101,7 @@ def plot_staircase_results(output_df, file_path):
         ax2.plot(data_.index, data_.scale_response, c="dodgerblue")
         ax2.scatter(data_.index, data_.scale_response, c="dodgerblue")
         ax2.set_ylim(-5, 105)
-        ax2.set_ylabel("Confidence rating")
+        ax2.set_ylabel("Confidence rating", color="dodgerblue")
 
     ax[0].legend(fontsize="x-small", loc=3)
     plt.savefig(file_path, transparent=False)
