@@ -234,6 +234,12 @@ plotpath = Path(current_path, "data", f"{exp_name}_{subject}_{timestamp}.png")
 
 save_dict_as_json(jsonpath, continuous_output)
 
+info_text = stim.text(win, "PRESS SPACE TO CONTINUE")
+info_text.draw()
+win.flip()
+event.waitKeys(keyList=["space"])
+
+core.wait(2)
 
 for trial in range(n_trials):
 
@@ -241,7 +247,7 @@ for trial in range(n_trials):
     win.flip()
 
     pre_trial_wait = core.StaticPeriod()
-    pre_trial_wait.start(0.25)
+    pre_trial_wait.start(0.25 + np.random.uniform(0, 0.25))
 
     if trial > small_steps:
         mod = 1
@@ -430,7 +436,7 @@ for trial in range(n_trials):
             tr_type_step_value[trial_type] = 0
 
 
-    print(step, signal_prop, trial_type, correct, tr_type_corr_stair[trial_type])
+    print(step, round(signal_prop, 4), trial_type, correct, tr_type_corr_stair[trial_type])
     # file saving
     filepath = Path(current_path, "data", f"{exp_name}_{subject}_{timestamp}.csv")
     output_df = pd.DataFrame.from_dict(exp_data)
