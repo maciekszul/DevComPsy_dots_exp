@@ -10,6 +10,7 @@ from psychopy import event
 from psychopy import visual
 from psychopy import monitors
 from datetime import datetime
+from itertools import product
 from exp_util import randomisation, save_dict_as_json, update_json_file, plot_staircase_results, load_json
 
 
@@ -64,6 +65,7 @@ subject = exp_settings["subject"]
 
 monitors_ = {
     "office": [2560, 1440, 59.67, 33.56, 56],
+    "lab": [1920, 1080, 59.67, 33.56, 56],
     "meg": [1920, 1080, 52.70, 29.64, 56]
 }
 
@@ -155,20 +157,28 @@ dots_stim = visual.ElementArrayStim(
 )
 
 # exp prep
-directions = np.hstack([np.repeat(0.0, n_trials//2), np.repeat(180.0, n_trials//2)])
+# directions = np.hstack([np.repeat(0.0, n_trials//2), np.repeat(180.0, n_trials//2)])
 
-trial_types = np.hstack([np.repeat(0, n_trials//2), np.repeat(1, n_trials//2)])
+# trial_types = np.hstack([np.repeat(0, n_trials//2), np.repeat(1, n_trials//2)])
 
-scale_directions = np.hstack([np.repeat(0, n_trials//2), np.repeat(1, n_trials//2)])
+# scale_directions = np.hstack([np.repeat(0, n_trials//2), np.repeat(1, n_trials//2)])
 
-if randomisation_bool:
-    directions = randomisation(directions, 3)
-    trial_types = randomisation(trial_types, 3)
-    scale_directions = randomisation(scale_directions, 3)
-else:
-    np.random.shuffle(directions)
-    np.random.shuffle(trial_types)
-    np.random.shuffle(scale_directions)
+# if randomisation_bool:
+#     directions = randomisation(directions, 3)
+#     trial_types = randomisation(trial_types, 3)
+#     scale_directions = randomisation(scale_directions, 3)
+# else:
+#     np.random.shuffle(directions)
+#     np.random.shuffle(trial_types)
+#     np.random.shuffle(scale_directions)
+
+conds = {i: v for i, v in enumerate(list(product([0.0, 180.0],[0,1], [0,1])))}
+trial_conds = np.tile(np.arange(8), int(n_trials/8))
+trial_order = randomisation(trial_conds, N=3)
+trial_settings = np.array([conds[i] for i in trial_order])
+directions = trial_settings[:,0]
+trial_types = trial_settings[:,1].astype(int)
+scale_directions = trial_settings[:,2].astype(int)
 
 opposite_strengths = {
     "low": 0.05,
@@ -215,6 +225,7 @@ exp_data = {
     "block" : [],
     "trial_number": [],
     "dots_direction": [],
+    "scale_direction": [],
     "response_key": [],
     "response_correct": [],
     "opposite_strenght": [],
@@ -413,6 +424,7 @@ for trial in range(n_trials):
     exp_data["opposite_label"].append(trial_type)
     exp_data["scale_response"].append(scale_resp)
     exp_data["rt"].append(rt)
+    exp_data["scale_direction"].append(scale_direction)
     
 
     # staircase settings 2 in a row independently

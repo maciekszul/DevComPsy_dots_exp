@@ -1,7 +1,10 @@
 import json
+import random
 import numpy as np
 import pandas as pd
 import matplotlib.pylab as plt
+from collections import Counter
+import multiprocessing
 
 
 def check_equal(a):
@@ -31,19 +34,29 @@ def search_n(a, n):
     return check
 
 
-def randomisation(c, n):
+def randomisation(c, N=3, n=1):
     """
     c - conditions dict
     n - number of repetitions
+    N - number of consecutive elements
     """
     if isinstance(c, dict):
         c = np.tile(c.keys(), n)
     elif isinstance(c, np.ndarray):
         pass
     np.random.shuffle(c)
-    while search_n(c, 4):
+    while search_n(c, N):
         np.random.shuffle(c)
     return c
+
+
+def is_valid(arr, N):
+    """Check if the array has no N consecutive same elements."""
+    for i in range(len(arr) - N + 1):
+        if len(set(arr[i:i+N])) == 1:
+            return False
+    return True
+
 
 
 def load_json(json_path):
