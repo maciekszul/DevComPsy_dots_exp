@@ -1,6 +1,6 @@
 {
     "randomisation_bool": false,
-    "n_trials": 680,
+    "n_trials": 360,
     "n_points": 250,
     "radius": 12.5,
     "dot_life_s": 0.07,
