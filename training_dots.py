@@ -17,10 +17,11 @@ def abort():
 
 monitors_ = {
     "office": [2560, 1440, 59.67, 33.56, 56],
+    "lab": [1920, 1080, 59.67, 33.56, 56],
     "meg": [1920, 1080, 52.70, 29.64, 56]
 }
 
-mon_choice = "office"
+mon_choice = "lab"
 
 mon = monitors.Monitor(mon_choice)
 w_px, h_px, w_cm, h_cm, d_cm = monitors_[mon_choice]

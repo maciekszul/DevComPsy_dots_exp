@@ -38,7 +38,7 @@ exp_settings = {
     "gender (m/f/o)": "o",
     "age": 69,
     "block": 0,
-    "monitor": "office",
+    "monitor": "lab",
     "show_stair": True,
     "settings": "main_exp_settings.json"
 }
