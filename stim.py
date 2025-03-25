@@ -17,12 +17,12 @@ def scales_LR(win, width, height, offset):
 
     marker = visual.Line(
         win, start=[0 - width/2, 0], end=[0 + width/2, 0],
-        lineColor="#800000", lineWidth=15
+        lineColor="#000080", lineWidth=15
         )
     
     box = visual.Rect(
         win, width=width, height=height,
-        color="#800000", units="deg", anchor="bottom",
+        color="#000080", units="deg", anchor="bottom",
         pos=[0,0]
     )
 

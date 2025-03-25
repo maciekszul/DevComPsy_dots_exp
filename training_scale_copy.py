@@ -70,7 +70,7 @@ arrows_ori = [180.0, 0.0]
 arrows_stim = stim.arrows(
     win, arrows_img, arrows_pos, arrows_ori
 )
-[i.setOpacity(0.75) for i in arrows_stim]
+[i.setOpacity(0.5) for i in arrows_stim]
 
 
 # labels
@@ -83,25 +83,15 @@ label_stim = stim.labels(
 [label_stim[i].setColor(c) for i, c in enumerate(label_colours)]
 
 
-
-
 win.flip()
 
 for i in range(100):
     win.flip()
     core.wait(0.75)
     scale_direction = np.random.choice([0, 1])
-    if scale_direction == 1:
-        label_pos_tr = label_pos[::-1]
-        subtr = -(height/2)
-    else:
-        label_pos_tr = label_pos
-        subtr = (height/2)
 
     binary_mouse = []
     rt_list = []
-    cursor_pos = []
-   
 
     mouse.setPos()
     mouse.clickReset()
@@ -113,6 +103,7 @@ for i in range(100):
             scale[2].setOpacity(1.0)
             scale[3].setOpacity(1.0)
             rt_list.append(times[0])
+            scale[2].pos = [q, -(height/2)]
             scale[3].pos = [q, 0 - height/2]
 
         elif buttons[2]:
@@ -120,6 +111,7 @@ for i in range(100):
             scale[2].setOpacity(1.0)
             scale[3].setOpacity(1.0)
             rt_list.append(times[2])
+            scale[2].pos = [q, m_pos[1]]
             scale[3].pos = [q, 0 - height/2]
 
         else:
@@ -127,21 +119,7 @@ for i in range(100):
             scale[2].setOpacity(0.0)
             scale[3].setOpacity(0.0)
             mouse.setPos((0, -(height/2))) # start point of the scale
-            
         
-        [p.setPos(label_pos_tr[ix]) for ix, p in enumerate(label_stim)]
-        
-        if m_pos[1] < -(height/2):
-            scale[2].pos = [q, -(height/2)]
-            scale[3].size = [2.0, 0]
-        elif m_pos[1] > (height/2):
-            scale[2].pos = [q, (height/2)]
-            scale[3].size = [2.0, height]
-        else:
-            scale[2].pos = [q, m_pos[1]]
-            scale[3].size = [2.0, m_pos[1] + height/2]
-        
-        stim.draw(label_stim)
         stim.draw(arrows_stim)
         stim.draw(scale)
         win.flip()
@@ -152,10 +130,7 @@ for i in range(100):
             binary_mouse.append(any(buttons))
             press_resp = buttons
         
-        elif (len(binary_mouse) > 10) and (any(buttons) == False):
+        elif (len(binary_mouse) > 3) and (any(buttons) == False):
             break
-
-
-    print(np.unique(rt_list).min(), np.abs(np.round((scale[2].pos[1] + subtr)/ height, 2)*100), "%")
 
 abort()

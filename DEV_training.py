@@ -33,14 +33,14 @@ def abort(filename, plot=True, show=False):
 current_path = Path.cwd()
 
 exp_settings = {
-    "exp_name": "counterfactual_staircase",
+    "exp_name": "counterfactual_staircase_training",
     "subject": "test",
     "gender (m/f/o)": "o",
     "age": 69,
     "block": 0,
     "monitor": "lab",
     "show_stair": False,
-    "settings": "main_exp_settings.json"
+    "settings": "training_settings.json"
 }
 
 prompt = gui.DlgFromDict(
@@ -131,8 +131,8 @@ arrows_stim = stim.arrows(
 
 # labels
 label_colours = ["#800000", "#008000"]
-label_str = ["0%", "100%"]
-label_pos = [(0, -6.5), (0, 6.5)]
+label_str = ["WRONG", "CORRECT"]
+label_pos = [(0, 0.0), (0, 0.0)]
 label_stim = stim.labels(
     win, label_str, label_pos
 )
@@ -229,14 +229,12 @@ exp_data = {
     "block" : [],
     "trial_number": [],
     "dots_direction": [],
-    "scale_direction": [],
     "response_key": [],
     "response_correct": [],
     "opposite_strenght": [],
     "opposite_label": [],
     "step": [],
     "signal_prop": [],
-    "scale_response": [],
     "rt" : [],
     "exp_timing_trial_prep_start": [],
     "exp_timing_stim_start": [],
@@ -313,21 +311,6 @@ for trial in range(n_trials):
 
     binary_mouse = []
     rt_list = []
-
-    trial_output = {
-        "scale_position": [],
-        "mouse_position": [],
-        "time": []
-    }
-
-    scale_direction = scale_directions[trial]
-    scale_direction = np.random.choice([0, 1])
-    if scale_direction == 1:
-        label_pos_tr = label_pos[::-1]
-        subtr = -(height/2)
-    else:
-        label_pos_tr = label_pos
-        subtr = (height/2)
     
     rt = None
 
@@ -338,67 +321,37 @@ for trial in range(n_trials):
     mouse.clickReset()
     q = 0
     ever_pressed = False
+    scale_start = core.getTime()
     while True:
         m_pos = mouse.getPos()
         buttons, times = mouse.getPressed(getTime=True)
-        if buttons == [True, False, False]:
-            if not ever_pressed:
-                q = -3
-                ever_pressed = True
+        if buttons[0]:
+            q = -3
             scale[2].setOpacity(1.0)
             scale[3].setOpacity(1.0)
             rt_list.append(times[0])
+            scale[2].pos = [q, -(height/2)]
             scale[3].pos = [q, 0 - height/2]
 
-        elif buttons == [False, False, True]:
-            if not ever_pressed:
-                q = 3
-                ever_pressed = True
+        elif buttons[2]:
+            q = 3
             scale[2].setOpacity(1.0)
             scale[3].setOpacity(1.0)
             rt_list.append(times[2])
+            scale[2].pos = [q, m_pos[1]]
             scale[3].pos = [q, 0 - height/2]
 
-        elif [True, False, True]:
-            scale[2].setOpacity(0.0)
-            scale[3].setOpacity(0.0)
-
         else:
-            # if not ever_pressed:
-            #     q = 0
-            #     ever_pressed = True
+            q = 0
             scale[2].setOpacity(0.0)
             scale[3].setOpacity(0.0)
             mouse.setPos((0, -(height/2))) # start point of the scale
-
-
         
-        [p.setPos(label_pos_tr[ix]) for ix, p in enumerate(label_stim)]
-        
-        if m_pos[1] < -(height/2):
-            scale[2].pos = [q, -(height/2)]
-            scale[3].size = [2.0, 0]
-        elif m_pos[1] > (height/2):
-            scale[2].pos = [q, (height/2)]
-            scale[3].size = [2.0, height]
-        else:
-            scale[2].pos = [q, m_pos[1]]
-            scale[3].size = [2.0, m_pos[1] + height/2]
-        
-        stim.draw(label_stim)
         stim.draw(arrows_stim)
         stim.draw(scale)
         stim.draw(fix_parts)
 
         frame_time = win.flip()
-
-        trial_output["time"].append(frame_time)
-        trial_output["scale_position"].append(
-            np.round(np.abs(((scale[2].pos[1] + subtr) / height) *100), 2)
-        )
-        trial_output["mouse_position"].append(
-            m_pos[1]
-        )
 
         if any(buttons):
             binary_mouse.append(any(buttons))
@@ -421,13 +374,18 @@ for trial in range(n_trials):
         response = None
         correct = None
     
-    stim.draw(fix_parts)
+    if response == True:
+        stim.draw([label_stim[0]])
+    elif response == False:
+        stim.draw([label_stim[1]])
+
     scale_stop = win.flip()
 
+    stim.draw(fix_parts)
+    win.flip()
+
     post_trial_wait = core.StaticPeriod()
-    post_trial_wait.start(np.random.uniform(low=3, high=4))
-    
-    scale_resp = np.round(np.abs(((scale[2].pos[1] + subtr)/ height) *100), 2)
+    post_trial_wait.start(np.random.uniform(low=2, high=3))
     
     exp_data["subject"].append(exp_settings["subject"])
     exp_data["age"].append(exp_settings["age"])
@@ -441,13 +399,11 @@ for trial in range(n_trials):
     exp_data["signal_prop"].append(signal_prop)
     exp_data["opposite_strenght"].append(opposite_strengths[trial_type])
     exp_data["opposite_label"].append(trial_type)
-    exp_data["scale_response"].append(scale_resp)
     exp_data["rt"].append(rt)
-    exp_data["scale_direction"].append(scale_direction)
     exp_data["exp_timing_trial_prep_start"].append(trial_prep_start)
     exp_data["exp_timing_stim_start"].append(stim_start)
     exp_data["exp_timing_stim_stop"].append(stim_stop)
-    exp_data["exp_timing_scale_start"].append(trial_output["time"][0])
+    exp_data["exp_timing_scale_start"].append(scale_start)
     exp_data["exp_timing_scale_stop"].append(scale_stop)
     
 
@@ -477,9 +433,6 @@ for trial in range(n_trials):
     filepath = Path(current_path, "data", f"{exp_name}_{subject}_{timestamp}.csv")
     output_df = pd.DataFrame.from_dict(exp_data)
     output_df.to_csv(filepath, index=False)
-    
-    update_dict_with = {trial: trial_output}
-    update_json_file(jsonpath, update_dict_with)
 
     post_trial_wait.complete()
 
