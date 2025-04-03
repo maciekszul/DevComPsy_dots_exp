@@ -16,7 +16,7 @@ from exp_util import randomisation, save_dict_as_json, update_json_file, plot_st
 
 timestamp = str(datetime.timestamp(datetime.now()))
 
-def abort(filename, plot=True, show=False):
+def abort(filename, plot=False, show=False):
     if plot:
         plot_staircase_results(output_df, filename)
     if show:
@@ -132,7 +132,7 @@ arrows_stim = stim.arrows(
 # labels
 label_colours = ["#800000", "#008000"]
 label_str = ["WRONG", "CORRECT"]
-label_pos = [(0, 0.0), (0, 0.0)]
+label_pos = [(0.0, 1.0), (0.0, 1.0)]
 label_stim = stim.labels(
     win, label_str, label_pos
 )
@@ -176,13 +176,13 @@ dots_stim = visual.ElementArrayStim(
 #     np.random.shuffle(trial_types)
 #     np.random.shuffle(scale_directions)
 
-conds = {i: v for i, v in enumerate(list(product([0.0, 180.0],[0,1], [0,1])))}
-trial_conds = np.tile(np.arange(8), int(n_trials/8))
-trial_order = randomisation(trial_conds, N=3)
+conds = {i: v for i, v in enumerate(list(product([0.0, 180.0],[0,1])))}
+trial_conds = np.tile(np.arange(4), int(n_trials/4))
+trial_order = randomisation(trial_conds, N=2)
 trial_settings = np.array([conds[i] for i in trial_order])
 directions = trial_settings[:,0]
 trial_types = trial_settings[:,1].astype(int)
-scale_directions = trial_settings[:,2].astype(int)
+scale_directions = np.tile(np.arange(2), int(n_trials/2))
 
 opposite_strengths = {
     "low": 0.05,
@@ -357,7 +357,7 @@ for trial in range(n_trials):
             binary_mouse.append(any(buttons))
             press_resp = buttons
         
-        elif (len(binary_mouse) > 10) and (any(buttons) == False):
+        elif (len(binary_mouse) > 4) and (any(buttons) == False):
             try:
                 rt = np.unique(rt_list).min()
             except:
@@ -373,13 +373,13 @@ for trial in range(n_trials):
     except:
         response = None
         correct = None
-    
-    if response == True:
-        stim.draw([label_stim[0]])
-    elif response == False:
-        stim.draw([label_stim[1]])
 
     scale_stop = win.flip()
+    
+    if correct == True:
+        stim.draw([label_stim[1]])
+    elif correct == False:
+        stim.draw([label_stim[0]])
 
     stim.draw(fix_parts)
     win.flip()
