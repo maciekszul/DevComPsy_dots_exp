@@ -177,8 +177,10 @@ dots_stim = visual.ElementArrayStim(
 #     np.random.shuffle(scale_directions)
 
 conds = {i: v for i, v in enumerate(list(product([0.0, 180.0],[0,1])))}
-trial_conds = np.tile(np.arange(4), int(n_trials/4))
-trial_order = randomisation(trial_conds, N=2)
+trial_order = []
+for i in range(int(n_trials/4)):
+    trial_order.append(randomisation(np.arange(4), N=2))
+trial_order = np.array(trial_order).flatten()
 trial_settings = np.array([conds[i] for i in trial_order])
 directions = trial_settings[:,0]
 trial_types = trial_settings[:,1].astype(int)
