@@ -137,3 +137,20 @@ def plot_image(win, image_path):
         win, image=image_path
     )
     return img
+
+
+def make_boxes(win, width, positions, colour):
+    boxes = []
+    for i in positions:
+        boxes.append(
+            visual.Rect(
+                win, width, height=100, color=colour, units="deg",
+                anchor="bottom", pos=[width/2 + i, -50]
+            )
+        )
+    return boxes
+
+def move_boxes(boxes, displacement):
+    for i in boxes:
+        i.pos -= [displacement, 0]
+
