@@ -261,3 +261,31 @@ def make_directory(root_path, extended_dir):
     root_path.mkdir(parents=True, exist_ok=True)
     return root_path
 
+def get_max(max_data, max_bool, no_block=999):
+    blocks = np.unique(max_bool)
+    blocks = blocks[blocks != no_block]
+    block_maps = [max_bool == i for i in blocks]
+    block_data = [max_data[i] for i in block_maps]
+    max_0_100 = np.mean(np.sort([np.max(i) for i in block_data])[-3:])
+    return max_0_100
+
+
+def get_median(max_data, max_bool, no_block=999):
+    blocks = np.unique(max_bool)
+    blocks = blocks[blocks != no_block]
+    block_maps = [max_bool == i for i in blocks]
+    block_data = [max_data[i] for i in block_maps]
+    max_0_100 = np.mean(np.sort([np.median(i) for i in block_data])[-3:])
+    return max_0_100
+
+
+def get_last_file(subject_path, ext="*.csv", string="block", ret_path=False):
+    last_file = get_files(subject_path, ext, strings=[string])[-1]
+    if ret_path:
+        return last_file
+    else:
+        try:
+            last_block = int(last_file.stem.split("_")[-2].split("-")[-1])
+            return last_block
+        except:
+            return 0

@@ -1,7 +1,9 @@
 {
     "randomisation_bool": false,
+    "resp_dur": 2.0,
     "n_trials": 360,
     "n_points": 250,
+    "dot_speed": 5.625,
     "radius": 12.5,
     "dot_life_s": 0.07,
     "trial_duration": 0.35,

@@ -4,7 +4,7 @@ import dots_util
 import numpy as np
 from os import sep
 from pathlib import Path
-from exp_util import load_json, save_dict_as_json
+from exp_util import load_json, save_dict_as_json, make_directory
 from datetime import datetime
 from itertools import cycle
 from psychopy import gui
@@ -13,6 +13,9 @@ from psychopy import event
 from psychopy import visual
 from psychopy import monitors
 
+
+current_path = Path.cwd()
+data_path = current_path.joinpath("data")
 
 timestamp = str(datetime.timestamp(datetime.now()))
 
@@ -182,10 +185,6 @@ calibration = {
     "calib_max_data_2_9": [],
     "calib_max_data_0_1_bool": [],
     "calib_max_data_2_9_bool": [],
-    "calib_3s_data_0_1": [],
-    "calib_3s_data_2_9": [],
-    "calib_3s_data_0_1_bool": [],
-    "calib_3s_data_2_9_bool": [],
 }
 
 # calibration
@@ -253,14 +252,21 @@ while True:
 
     data_in_0 = raw_data_in_0 - baseline_0
 
-    data_0.append(data_in_0 * 10 - 4.5)
+    data_0.append(data_in_0 - 4.5)
     data_0 = data_0[1:]
 
-    circle.pos = [0, data_in_0 * 10 - 4.5]
+    circle.pos = [0, data_in_0 - 4.5]
 
-    overlap_bool = any([circle.overlaps(i) for i in boxes])
+    overlap = [circle.overlaps(i) for i in boxes]
 
-    calibration["calib_max_data_0_1_bool"].append(overlap_bool)
+    overlap_bool = any(overlap)
+
+    if overlap_bool:
+        which_box = overlap.index(True)
+    elif not overlap_bool:
+        which_box = 999
+
+    calibration["calib_max_data_0_1_bool"].append(which_box)
 
     trace_0.vertices = np.vstack([data_pos, np.array(data_0)]).transpose()
     stim.move_boxes(boxes, step_frame)
@@ -286,87 +292,21 @@ while True:
 
     data_in_1 = raw_data_in_1 - baseline_1
 
-    data_1.append(data_in_1 * 10 - 4.5)
+    data_1.append(data_in_1 - 4.5)
     data_1 = data_1[1:]
 
-    circle.pos = [0, data_in_1 * 10 - 4.5]
+    circle.pos = [0, data_in_1 - 4.5]
 
-    overlap_bool = any([circle.overlaps(i) for i in boxes])
+    overlap = [circle.overlaps(i) for i in boxes]
 
-    calibration["calib_max_data_2_9_bool"].append(overlap_bool)
+    overlap_bool = any(overlap)
 
-    trace_1.vertices = np.vstack([data_pos, np.array(data_1)]).transpose()
-    stim.move_boxes(boxes, step_frame)
-    line.draw()
-    stim.draw(boxes)
-    stim.draw([trace_1, line, circle] + ticks + [hand])
-    win.flip()
-
-
-    if event.getKeys(keyList=["escape"], timeStamped=False):
-        break
-
-text.text = max_3s_effort_text
-space_text.text = continue_text
-
-stim.draw([text, space_text])
-win.flip()
-
-event.waitKeys(keyList=["space"])
-
-boxes = stim.make_boxes(
-    win, width, positions, "#daa520"
-)
-
-while True:
-    hand.text = "LEFT"
+    if overlap_bool:
+        which_box = overlap.index(True)
+    elif not overlap_bool:
+        which_box = 999
     
-    raw_data_in_0 = d.getAIN(0)
-    calibration["calib_3s_data_0_1"].append(raw_data_in_0)
-
-    data_in_0 = raw_data_in_0 - baseline_0
-
-    data_0.append(data_in_0 * 10 - 4.5)
-    data_0 = data_0[1:]
-
-    circle.pos = [0, data_in_0 * 10 - 4.5]
-
-    overlap_bool = any([circle.overlaps(i) for i in boxes])
-
-    calibration["calib_3s_data_0_1_bool"].append(overlap_bool)
-
-    trace_0.vertices = np.vstack([data_pos, np.array(data_0)]).transpose()
-    stim.move_boxes(boxes, step_frame)
-    line.draw()
-    stim.draw(boxes)
-    stim.draw([trace_0, line, circle] + ticks + [hand])
-    win.flip()
-
-
-    if event.getKeys(keyList=["escape"], timeStamped=False):
-        break
-    
-
-boxes = stim.make_boxes(
-    win, width, positions, "#daa520"
-)
-
-while True:
-    hand.text = "RIGHT"
-    
-    raw_data_in_1 = d.getAIN(2)
-    calibration["calib_3s_data_2_9"].append(raw_data_in_1)
-
-    data_in_1 = raw_data_in_1 - baseline_1
-
-    data_1.append(data_in_1 * 10 - 4.5)
-    data_1 = data_1[1:]
-
-    circle.pos = [0, data_in_1 * 10 - 4.5]
-
-    overlap_bool = any([circle.overlaps(i) for i in boxes])
-
-    calibration["calib_3s_data_2_9_bool"].append(overlap_bool)
+    calibration["calib_max_data_2_9_bool"].append(which_box)
 
     trace_1.vertices = np.vstack([data_pos, np.array(data_1)]).transpose()
     stim.move_boxes(boxes, step_frame)
@@ -392,9 +332,13 @@ if exp_settings["save"]:
     exp_name = exp_settings["exp_name"]
     subject = exp_settings["subject"]
 
-    output_path = f"data{sep}{exp_name}-{subject}-calibration-{timestamp}.json"
+    output_file = f"{exp_name}-{subject}-calibration-{timestamp}.json"
 
-    save_dict_as_json(output_path, output_dict)
+    output_dir = make_directory(data_path, subject)
+
+    out = output_dir.joinpath(output_file)
+
+    save_dict_as_json(out, output_dict)
 
 abort()
 
