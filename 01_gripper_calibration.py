@@ -21,7 +21,7 @@ timestamp = str(datetime.timestamp(datetime.now()))
 
 exp_settings = {
     "exp_name": "counterfactual_staircase",
-    "subject": "test",
+    "subject": "sub-666",
     "gender (m/f/o)": "o",
     "age": 0,
     "monitor": "office",

@@ -171,7 +171,6 @@ scale_boundaries = calibration["scale_boundaries"]
 
 scale_boundaries = {int(i): scale_boundaries[i] for i in scale_boundaries.keys()}
 
-print(scale_boundaries)
 
 # scales positioning
 offset = 3
@@ -205,7 +204,7 @@ fix_size = 0.3
 fix_parts = stim.fixation_point(win, fix_size)
 
 # info
-info_text = stim.text(win, "RANDOM IS WORKING")
+info_text = stim.text(win, "RANDOMISATION IS WORKING")
 info_text.draw()
 win.flip()
 
@@ -504,6 +503,8 @@ for trial in range(n_trials):
         if any(thr_bool):
             text_text = "Release the grip"
             info_text.text = text_text
+            info_text.pos = (0,0)
+            info_text.height = 2
             stim.draw([info_text])
             win.flip()
             
@@ -578,10 +579,15 @@ for trial in range(n_trials):
                 "-".join([str(trial), "time"]): time
             }
             update_json_file(jsonpath, trial_output)
+
             post_response_wait.complete()
             break
         
         if event.getKeys(keyList=["="], timeStamped=False):
             break
         elif event.getKeys(keyList=["escape"], timeStamped=False):
+            plot_staircase_results(output_df, plotpath)
             abort()
+
+plot_staircase_results(output_df, plotpath)
+abort()

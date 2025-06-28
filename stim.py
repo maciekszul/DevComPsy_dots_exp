@@ -154,3 +154,17 @@ def move_boxes(boxes, displacement):
     for i in boxes:
         i.pos -= [displacement, 0]
 
+
+def feedback_update(correct, text_stim):
+    if correct == True:
+        text_stim.text = "CORRECT"
+        text_stim.color = "#008000"
+    elif correct == False:
+        text_stim.text = "WRONG"
+        text_stim.color = "#800000"
+    else:
+        text_stim.text = "NO RESPONSE"
+        text_stim.color = "#FFFFFF"
+    
+    return text_stim
+
